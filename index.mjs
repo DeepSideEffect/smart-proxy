@@ -1,6 +1,11 @@
-const express = require('express');
-const fetch = require('node-fetch');
+import express from 'express';
+import fetch from 'node-fetch';
+import morgan from 'morgan';
+
 const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(morgan('dev'));
 
 app.get('/proxy', async (req, res) => {
 	const targetUrl = req.query.url;
@@ -19,6 +24,8 @@ app.get('/proxy', async (req, res) => {
 	}
 });
 
-app.listen(3000, () => {
-	console.log('Proxy server running on http://localhost:3000');
+app.listen(port, () => {
+	console.log(`Proxy server running on http://localhost:${port}`);
 });
+
+// Use it with : PORT=3000 node index.mjs
