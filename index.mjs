@@ -13,6 +13,7 @@ const app = express();
 const port = process.env.PORT || 3000; // Ex. to change the port : >npx cross-env PORT=3001 node index.mjs< or >npx cross-env PORT=3001 npm run start< or see .env config file.
 const isProduction = process.env.NODE_ENV === 'production';
 const cookieMaxAge = parseInt(process.env.COOKIE_MAX_AGE, 10);
+app.set('trust proxy', 1);
 
 //#region Middlewares
 
