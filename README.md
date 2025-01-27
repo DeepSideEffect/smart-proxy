@@ -33,7 +33,7 @@
 		```
 ## Utilisation
 Ajouter `/proxy?url=` à la suite de l'adresse courante du serveur et avant l'url visée.\
-Par exemple, en local avec le port par défaut, pour viser l'url suivante `https://www.exemple.com` essayer avec `http://localhost:3000/proxy?url=https://www.google.com`.
+Par exemple, en local avec le port par défaut, pour viser l'url suivante `https://www.exemple.com` essayer avec `http://localhost:3000/proxy?url=https://www.exemple.com`.
 
 ## Dépendances
 - *express*
