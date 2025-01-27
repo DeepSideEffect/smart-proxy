@@ -1,19 +1,30 @@
 import express from 'express';
+import session from 'express-session';
 import fetch from 'node-fetch';
 import morgan from 'morgan';
 import helmet from 'helmet';
+import dotenv from 'dotenv';
 import { URL } from 'url';
+
+dotenv.config();
 
 const entryEndpoint = '/proxy';
 const app = express();
-const port = process.env.PORT || 3000; // Ex. to change the port : >npx cross-env PORT=3001 node index.mjs< ou >npx cross-env PORT=3001 npm run start<
-let targetUrlBase = '';
-let targetBasePath = '';
+const port = process.env.PORT || 3000; // Ex. to change the port : >npx cross-env PORT=3001 node index.mjs< or >npx cross-env PORT=3001 npm run start< or see .env config file.
+const isProduction = process.env.NODE_ENV === 'production';
+const cookieMaxAge = parseInt(process.env.COOKIE_MAX_AGE, 10);
 
 //#region Middlewares
 
 app.use(helmet());
 app.use(morgan('dev'));
+
+app.use(session({
+	secret: process.env.SESSION_SECRET,
+	resave: false,
+	saveUninitialized: true,
+	cookie: { secure: isProduction, maxAge: cookieMaxAge }
+}));
 
 app.use('*', (req, res, next) => {
 	console.log('*****************************');
@@ -29,28 +40,30 @@ app.use('*', (req, res, next) => {
 //#region Routes
 
 app.get(entryEndpoint, async (req, res) => {
+	let targetUrlBase = req.session?.targetUrlBase ?? '';
 	let targetUrl = req.query?.url;
 	if (!targetUrl) {
 		if (!targetUrlBase || req.url.includes('http'))
-			return res.status(400).send('URL manquante');
+			return res.status(400).send("URL manquante en paramètre tel que '/proxy?url=http...' / Missing url querystring like '/proxy?url=http...'");
 		else {
 			const cleanUrl = req.url.replace(entryEndpoint, '');
-			targetUrl = targetUrlBase.concat(targetBasePath).concat(cleanUrl);
+			targetUrl = targetUrlBase.concat(req.session.targetBasePath).concat(cleanUrl);
 			return getAndSendData(res, targetUrl);
 		}
 	}
 
-	targetUrlBase = getTargetUrlBase(targetUrl);
+	req.session.targetUrlBase = getTargetUrlBase(req, targetUrl);
 	getAndSendData(res, targetUrl);
 });
 
 app.get('/*', async (req, res) => {
+	const targetUrlBase = req.session?.targetUrlBase ?? '';
 	const targetUrl = targetUrlBase.concat(req.originalUrl);
 	getAndSendData(res, targetUrl);
 });
 
 app.listen(port, () => {
-	if (process.env.NODE_ENV === 'production') {
+	if (isProduction) {
 		console.log(`Proxy server running in production on port ${port}`);
 	} else {
 		console.log(`Proxy server running in development on http://localhost:${port}`);
@@ -80,9 +93,9 @@ async function getAndSendData(res, targetUrl) {
 	}
 }
 
-function getTargetUrlBase(targetUrl) {
+function getTargetUrlBase(req, targetUrl) {
 	const parsedUrl = new URL(targetUrl);
-	targetBasePath = parsedUrl.pathname;
+	req.session.targetBasePath = parsedUrl.pathname;
 	const protocol = parsedUrl.protocol;
 	const domain = parsedUrl.hostname;
 	const rootUrl = `${protocol}//${domain}`;
