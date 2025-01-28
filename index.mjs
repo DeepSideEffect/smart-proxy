@@ -45,16 +45,23 @@ app.get(entryEndpoint, async (req, res) => {
 	let targetUrl = req.query?.url;
 	if (!targetUrl) {
 		if (!targetUrlBase || req.url.includes('http'))
-			return res.status(400).send("URL manquante en paramètre tel que '/proxy?url=http...' / Missing url querystring like '/proxy?url=http...'");
+			return res.status(400).send("URL manquante en paramètre tel que '/proxy?url=http...' / \nMissing url querystring like '/proxy?url=http...'");
 		else {
 			const cleanUrl = req.url.replace(entryEndpoint, '');
 			targetUrl = targetUrlBase.concat(req.session.targetBasePath).concat(cleanUrl);
-			return getAndSendData(res, targetUrl);
+			getAndSendData(res, targetUrl);
+			return;
 		}
 	}
 
 	req.session.targetUrlBase = getTargetUrlBase(req, targetUrl);
 	getAndSendData(res, targetUrl);
+});
+
+app.get('/', (_req, res) => {
+	const welcomeMsg = "Bienvenue sur smart-proxy ! \nAjouter le paramètre '/proxy?url=http...' à la route courante en completant l'URL";
+	const welcomeMsg_EN= "Welcome to smart-proxy! \nAdd the query parameter '/proxy?url=http...' to the current route by completing the URL";
+	res.status(200).send(welcomeMsg.concat(' /\n\n').concat(welcomeMsg_EN));
 });
 
 app.get('/*', async (req, res) => {
