@@ -30,6 +30,8 @@ app.use(session({
 app.use('*', (req, res, next) => {
 	console.log('*****************************');
 	console.log('***      New request      ***');
+	console.log(`*** Client IP: ${req.headers['x-forwarded-for'] || req.socket.remoteAddress} ***`);
+	console.log(`*** Client domain: ${req.hostname}:${req.socket.localPort} ***`);
 	console.log(`*** Received url: ${req.url} ***`);
 	console.log(`*** Requested url: ${req.query?.url ?? req.originalUrl} ***`);
 
@@ -58,9 +60,14 @@ app.get(entryEndpoint, async (req, res) => {
 	getAndSendData(res, targetUrl);
 });
 
+app.get('/robots.txt', (_req, res) => {
+	res.type('text/plain');
+	res.send('User-agent: *\nDisallow: /');
+});
+
 app.get('/', (_req, res) => {
 	const welcomeMsg = "Bienvenue sur smart-proxy ! \nAjouter le paramètre '/proxy?url=http...' à la route courante en completant l'URL";
-	const welcomeMsg_EN= "Welcome to smart-proxy! \nAdd the query parameter '/proxy?url=http...' to the current route by completing the URL";
+	const welcomeMsg_EN = "Welcome to smart-proxy! \nAdd the query parameter '/proxy?url=http...' to the current route by completing the URL";
 	res.status(200).send(welcomeMsg.concat(' /\n\n').concat(welcomeMsg_EN));
 });
 
@@ -83,7 +90,7 @@ app.listen(port, () => {
 //#region Helpers
 
 async function getAndSendData(res, targetUrl) {
-	console.log(`*** target url: ${targetUrl}`);
+	console.log(`*** target url: ${targetUrl} ***`);
 	console.log('*****************************');
 
 	try {
